@@ -63,7 +63,7 @@ class ScrubJpeg:
         """Returns true if marker indicates metadata"""
         val = ord(marker)
         msn = val >> 4
-        if msn == 0xc or msn == 0xd or val == 0x3 and self.is_jfif:
+        if msn == 0xc or msn == 0xd:
             return False
 
         #Everything else as of now is unused or used for metadaat
