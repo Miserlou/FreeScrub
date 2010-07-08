@@ -10,10 +10,6 @@ if __name__ == "__main__":
 import cStringIO
 import os
 
-
-jfif_header_1 = '\xff\xd8\xff\xe0'
-jfif_header_2 = 'JFIF\x00'
-    
 def scrub(file_in, file_out):
     """
     Scrubs the jpeg file_in, returns results to file_out
@@ -40,60 +36,58 @@ def _get_handler(byte):
     msn = ord(byte) >> 4 #Most significant nibble
 
     if msn == 0xc or msn == 0xd: #Image data segments
-        return _keep_handler
+        return _copy_handler
 
     if msn == 0xe: #APPn segments
         return _app_handler
-
-    if byte == '\xfe': #COM
-        return _ignore_handler
-
     
-    if not (0x00 < ord(byte) < 0xff):   #0xff00 and 0xffff aren't markers
+    if ord(byte) == 0x00 or ord(byte) == 0xff:
         return lambda inp, out: out.write('\xff%s' % byte)
     
-    
-    return _keep_handler #TODO: handle every case properly
+    return _trash_handler 
 
 def _app_handler(inp, out):
     """
     Handle APPn segments
     """
-    if _is_jfif(inp):
+    if _is_jfif(inp):   #We want to keep non-thumbnail JFIF data.
         _jfif_handler(inp, out)
-    else:
-        return _keep_handler(inp, out) #TODO: actually do something here
+    else:   #APPn segments seem to be  ordered 0xFFEn #### where #### is the
+            #number of bytes
+        length = (ord(inp.read(1)) << 8) + ord(inp.read(1))
+        inp.seek(length - 2, os.SEEK_CUR)
+    
+        
 
 def _is_jfif(inp):
     """
-    Determine if the data inp is current at indicates JFIF
+    Determine if the data inp is currently seeked to indicates JFIF
     """
-    at = inp.tell() #We want to return to where we were
+    save_loc = inp.tell()
     inp.seek(-1, os.SEEK_CUR)
     if inp.read(1) != '\xe0':
         rval = False
     else:
-        inp.read(2) #Length bytes
-        rval = (inp.read(6) == 'JFIF\x00\x01')  #Make sure it's JFIF and the
-                                                #appropritate major version
-    inp.seek(at, os.SEEK_SET)
+        inp.read(2)
+        rval = (inp.read(6) == 'JFIF\x00\x01')
+    inp.seek(save_loc, os.SEEK_SET)
     return rval
     
 
-def _ignore_handler(inp, out):
+def _trash_handler(inp, out):
     """
     Ignore the data until we reach a new marker
     """
-    _copy_handler(inp, out, False)
+    _basic_handler(inp, out, False)
 
-def _keep_handler(inp, out):
+def _copy_handler(inp, out):
     """
     Copy the data to the output until we reach a new marker
     """
-    _copy_handler(inp, out, True)
+    _basic_handler(inp, out, True)
 
 
-def _copy_handler(inp, out, keep):
+def _basic_handler(inp, out, keep):
     """
     Backend for keep and ignore handlers
     """
@@ -115,15 +109,17 @@ def _copy_handler(inp, out, keep):
                 inp.seek(-2, os.SEEK_CUR)
                 return
             #Only write out if we're keeping the data (e.g, this was
-            #called by _keep_handler
+            #called by _copy_handler
             elif keep:
                 out.write(byte)
                 out.write(byte2)
         elif keep:
             out.write(byte)
 
-
 def _jfif_handler(inp, out):
+    """
+    Strip out the thumbnail from a JFIF segment
+    """
     out.write('\xff\xe0')
     old_length = (ord(inp.read(1)) << 8) + ord(inp.read(1))
     out.write('\x00\x10')   #Our new JFIF segment will not contain a thumbnail
