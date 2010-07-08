@@ -33,15 +33,12 @@ def _get_handler(byte):
     """
     Returns the appropriate header based on the second byte in the marker
     """
-    msn = ord(byte) >> 4 #Most significant nibble
-
+    msn = ord(byte) >> 4
     if msn == 0xc or msn == 0xd: #Image data segments
         return _copy_handler
-
     if msn == 0xe: #APPn segments
         return _app_handler
-    
-    if ord(byte) == 0x00 or ord(byte) == 0xff:
+    if byte == '\x00' or byte == '\xff':
         return lambda inp, out: out.write('\xff%s' % byte)
     
     return _trash_handler 
@@ -54,7 +51,7 @@ def _app_handler(inp, out):
         _jfif_handler(inp, out)
     else:   #APPn segments seem to be  ordered 0xFFEn #### where #### is the
             #number of bytes
-        length = (ord(inp.read(1)) << 8) + ord(inp.read(1))
+        length = _get_length(inp)
         inp.seek(length - 2, os.SEEK_CUR)
     
         
@@ -74,57 +71,36 @@ def _is_jfif(inp):
     return rval
     
 
+def _get_length(inp):
+    """
+    Get the length of the current frame (pointed to by inp)
+    """
+    return (ord(inp.read(1)) << 8) + ord(inp.read(1))
+
 def _trash_handler(inp, out):
     """
     Ignore the data until we reach a new marker
     """
-    _basic_handler(inp, out, False)
+    length = _get_length(inp)
+    inp.seek(length, os.SEEK_CUR)
 
 def _copy_handler(inp, out):
     """
     Copy the data to the output until we reach a new marker
     """
-    _basic_handler(inp, out, True)
-
-
-def _basic_handler(inp, out, keep):
-    """
-    Backend for keep and ignore handlers
-    """
-    #Backtrack and write the marker
-    if keep:
-        inp.seek(-2, os.SEEK_CUR)
-        out.write(inp.read(2))
-    while True:
-        byte = inp.read(1)
-        if len(byte) == 0:
-            break
-
-        #If we hit a potential marker, check if the next byte is 0x00 or
-        #0xff. If so, then it's not a marker. Otherwise, seek backwards
-        #and leave.
-        if ord(byte) == 0xff:
-            byte2 = inp.read(1)
-            if (0x00 < ord(byte2) < 0xff):
-                inp.seek(-2, os.SEEK_CUR)
-                return
-            #Only write out if we're keeping the data (e.g, this was
-            #called by _copy_handler
-            elif keep:
-                out.write(byte)
-                out.write(byte2)
-        elif keep:
-            out.write(byte)
+    length = _get_length(inp)
+    inp.seek(-2, os.SEEK_CUR)
+    out.write(inp.read(length + 2))
 
 def _jfif_handler(inp, out):
     """
     Strip out the thumbnail from a JFIF segment
     """
     out.write('\xff\xe0')
-    old_length = (ord(inp.read(1)) << 8) + ord(inp.read(1))
-    out.write('\x00\x10')   #Our new JFIF segment will not contain a thumbnail
-    out.write(inp.read(12)) #Copy over everything but the thumbnail
-    out.write('\x00\x00')   #Set thumbnail size to 0 by 0
+    old_length = _get_length(inp)
+    out.write('\x00\x10')
+    out.write(inp.read(12))
+    out.write('\x00\x00')
     inp.seek(old_length - 14, os.SEEK_CUR)
 
 if __name__ == "__main__":
