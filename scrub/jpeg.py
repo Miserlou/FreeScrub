@@ -6,69 +6,91 @@ Scrubber for jpeg files
 
 if __name__ == "__main__":
     import sys
-
-class ScrubJpeg:
-
-    jfif_header_1 = '\xff\xd8\xff\xe0'
-    jfif_header_2 = 'JFIF\x00'
-
-    def __init__(self, filename):
-        with open(filename, 'rb') as jpegfile:
-            self.data = jpegfile.read()
-        self.markers = self.build_markers(self.data)
-        self.is_jfif = self.check_jfif(self.data)
-
-
-    def scrub(self, filename):
-        """Writes a scrubbed version of the data to filename"""
-        if self.is_jfif:
-            self._scrub_jfif()
-        else:
-            self._scrub()
-        with open(filename, 'wb') as jpegfile:
-            for byte in self.data:
-                jpegfile.write(byte)
-
-    def _scrub(self):
-        """Scrubs unimportant data"""
-        tdata = list(self.data)
-        for i in xrange(len(self.markers) - 1, -1, -1):
-            if self.is_marker_metadata(tdata[self.markers[i] + 1]):
-                del tdata[self.markers[i]:self.markers[i + 1]]
-                del self.markers[i]
-        self.data = "".join(tdata)
-
-    def _scrub_jfif(self):
-        pass
     
-    @staticmethod
-    def check_jfif(data):
-        """Returns true if data is a jfif image"""
-        return data.startswith(ScrubJpeg.jfif_header_1) and \
-        data[len(ScrubJpeg.jfif_header_1) + 2:].startswith(ScrubJpeg.jfif_header_2)
+import cStringIO
+import os
 
-    @staticmethod
-    def build_markers(jpegdata):
-        """Returns a table of where all markers begin (points to the FF, not the marker ID)"""
-        markers = []
-        i = 0
-        while i < len(jpegdata):
-            if jpegdata[i] == '\xff' and '\x01' <= jpegdata[i + 1] <= '\xFE':
-                markers.append(i)
-            i += 2
-        print markers
-        return markers
 
-    def is_marker_metadata(self, marker):
-        """Returns true if marker indicates metadata"""
-        val = ord(marker)
-        msn = val >> 4
-        if msn == 0xc or msn == 0xd or val == 0x3 and self.is_jfif:
-            return False
+jfif_header_1 = '\xff\xd8\xff\xe0'
+jfif_header_2 = 'JFIF\x00'
+    
+def scrub(file_in, file_out):
+    """
+    Scrubs the jpeg file_in, returns results to file_out
+    """
+    otmp = cStringIO.StringIO()
+    with open(file_in, 'rb') as input_:
+        while True:
+            byte = input_.read(1)
+            if len(byte) == 0:
+                break
+            if ord(byte) != 0xff:
+                otmp.write(byte)
+            else:
+                byte2 = input_.read(1)
+                _get_handler(byte2)(input_, otmp)
+    with open(file_out, 'wb') as output:
+        output.write(otmp.getvalue())
+    otmp.close()
 
-        #Everything else as of now is unused or used for metadaat
-        return True
+def _get_handler(byte):
+    """
+    Returns the appropriate header based on the second byte in the marker
+    """
+    if not (0x00 < ord(byte) < 0xff):
+        return lambda inp, out: out.write('\xff%s' % byte)
+    else:
+        return _keep_handler
+
+def _ignore_handler(inp, out):
+    """
+    Ignore the data until we reach a new marker
+    """
+    _copy_handler(inp, out, False)
+
+
+def _keep_handler(inp, out):
+    """
+    Copy the data to the output until we reach a new marker
+    """
+    _copy_handler(inp, out, True)
+
+
+def _copy_handler(inp, out, keep):
+    """
+    Backend for keep and ignore handlers
+    """
+    #Backtrack and write the marker
+    if keep:
+        inp.seek(-2, os.SEEK_CUR)
+        out.write(inp.read(2))
+    while True:
+        byte = inp.read(1)
+        if len(byte) == 0:
+            break
+
+        #If we hit a potential marker, check if the next byte is 0x00 or
+        #0xff. If so, then it's not a marker. Otherwise, seek backwards
+        #and leave.
+        if ord(byte) == 0xff:
+            byte2 = inp.read(1)
+            if (0x00 < ord(byte2) < 0xff):
+                inp.seek(-2, os.SEEK_CUR)
+                return
+            #Only write out if we're keeping the data (e.g, this was
+            #called by _keep_handler
+            elif keep:
+                out.write(byte)
+                out.write(byte2)
+        elif keep:
+            out.write(byte)
+
+
+def _jfif_handler(inp, out):
+    """
+    Handle jfif segments
+    """
+    pass
 
 if __name__ == "__main__":
-    scrubber = ScrubJpeg(sys.argv[1])
-    scrubber.scrub("%s-scr" % sys.argv[1])
+    scrub(sys.argv[1], "%s-scr" % sys.argv[1])
