@@ -127,8 +127,9 @@ def _jfif_handler(inp, out):
     out.write('\xff\xe0')
     old_length = (ord(inp.read(1)) << 8) + ord(inp.read(1))
     out.write('\x00\x10')   #Our new JFIF segment will not contain a thumbnail
-    out.write(inp.read(14)) #Copy over everything but the thumbnail
-    inp.seek(old_length - 16, os.SEEK_CUR)
+    out.write(inp.read(12)) #Copy over everything but the thumbnail
+    out.write('\x00\x00')   #Set thumbnail size to 0 by 0
+    inp.seek(old_length - 14, os.SEEK_CUR)
 
 if __name__ == "__main__":
     scrub(sys.argv[1], "%s-scr" % sys.argv[1])
