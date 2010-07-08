@@ -37,10 +37,29 @@ def _get_handler(byte):
     """
     Returns the appropriate header based on the second byte in the marker
     """
-    if not (0x00 < ord(byte) < 0xff):
-        return lambda inp, out: out.write('\xff%s' % byte)
-    else:
+    msn = ord(byte) >> 4 #Most significant nibble
+
+    if msn == 0xc or msn == 0xd: #Image data segments
         return _keep_handler
+
+    if msn == 0xe: #APPn segments
+        return _app_handler
+
+    if ord(byte) == 0xfe: #COM
+        return _ignore_handler
+
+    
+    if not (0x00 < ord(byte) < 0xff):   #0xff00 and 0xffff aren't markers
+        return lambda inp, out: out.write('\xff%s' % byte)
+    
+    
+    return _keep_handler #TODO: handle every case properly
+
+def _app_handler(inp, out):
+    """
+    Handle APPn segments
+    """
+    _keep_handler(inp, out) #TODO: actually do something here
 
 def _ignore_handler(inp, out):
     """
@@ -94,3 +113,5 @@ def _jfif_handler(inp, out):
 
 if __name__ == "__main__":
     scrub(sys.argv[1], "%s-scr" % sys.argv[1])
+    
+__all__ = [scrub]
