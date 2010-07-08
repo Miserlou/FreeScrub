@@ -34,8 +34,14 @@ def _get_handler(byte):
     Returns the appropriate header based on the second byte in the marker
     """
     msn = ord(byte) >> 4
-    if msn == 0xc or msn == 0xd: #Image data segments
+    lsn = ord(byte) - (msn << 4)
+    if msn == 0xc or msn == 0xd:
+        if msn == 0xc and lsn != 0x8:
+            return _smart_copy_handler
+        if msn == 0xd and lsn >= 0xb and lsn != 0xe:
+            return _smart_copy_handler
         return _copy_handler
+        
     if msn == 0xe: #APPn segments
         return _app_handler
     if byte == '\x00' or byte == '\xff':
@@ -81,15 +87,50 @@ def _trash_handler(inp, out):
     """
     Ignore the data until we reach a new marker
     """
-    length = _get_length(inp)
-    inp.seek(length, os.SEEK_CUR)
+    _basic_handler(inp, out, False)
 
 def _copy_handler(inp, out):
     """
     Copy the data to the output until we reach a new marker
     """
+    _basic_handler(inp, out, True)
+
+
+def _basic_handler(inp, out, keep):
+    """
+    Backend for keep and ignore handlers
+    """
+    #Backtrack and write the marker
+    if keep:
+        inp.seek(-2, os.SEEK_CUR)
+        out.write(inp.read(2))
+    while True:
+        byte = inp.read(1)
+        if len(byte) == 0:
+            break
+
+        #If we hit a potential marker, check if the next byte is 0x00 or
+        #0xff. If so, then it's not a marker. Otherwise, seek backwards
+        #and leave.
+        if ord(byte) == 0xff:
+            byte2 = inp.read(1)
+            if (0x00 < ord(byte2) < 0xff):
+                inp.seek(-2, os.SEEK_CUR)
+                return
+            #Only write out if we're keeping the data (e.g, this was
+            #called by _copy_handler
+            elif keep:
+                out.write(byte)
+                out.write(byte2)
+        elif keep:
+            out.write(byte)
+
+def _smart_copy_handler(inp, out):
+    """
+    Copy the data to the output until we reach a new marker
+    """
     length = _get_length(inp)
-    inp.seek(-2, os.SEEK_CUR)
+    inp.seek(-4, os.SEEK_CUR)
     out.write(inp.read(length + 2))
 
 def _jfif_handler(inp, out):
