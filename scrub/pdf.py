@@ -5,7 +5,7 @@ from sys import argv
 #arguments: argv1[1] is old pdf, argv[2] is new pdf
 
 output = PdfFileWriter()
-input1 = PdfFileReader(file(argv[1], "rb"))
+input = PdfFileReader(file(argv[1], "rb"))
 
 for i in range(0, input1.getNumPages()):
     output.addPage(input1.getPage(i))
