@@ -139,7 +139,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         sys.exit("Not enough parameters")
     if len(sys.argv) == 2:
-        outfile = sys.argv[1].replace(".jpg", "-scr.jpg") 
+        outfile = "%s-scr" % sys.argv[1]
     else:
         outfile = sys.argv[2]
     scrub(sys.argv[1], outfile)
