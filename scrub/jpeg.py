@@ -1,20 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Scrubber for jpeg files
-"""
+#Copyright (c) Michael McKinley, 2010
+#All code is released under the simplified (two-clause) BSD license
+"""Functions for removing any metadata from a JPEG file"""
+
+import cStringIO
+import os
 
 if __name__ == "__main__":
     import sys
     
-import cStringIO
-import os
 
 def scrub(file_in, file_out):
     """
     Scrubs the jpeg file_in, returns results to file_out
     """
+    #Before we do anything, make sure that file_out is writeable
+    open(file_out, "w").close()
     stripped = cStringIO.StringIO()
+    
     with open(file_in, 'rb') as input_:
         header = input_.read(2)
         if header != '\xff\xd8':
