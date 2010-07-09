@@ -6,11 +6,12 @@
 
 import cStringIO
 import os
+from scrubdec import restore_pos
+
 
 if __name__ == "__main__":
     import sys
     
-
 def scrub(file_in, file_out):
     """
     Scrubs the jpeg file_in, returns results to file_out
@@ -37,6 +38,7 @@ def scrub(file_in, file_out):
         output.write(stripped.getvalue())
     stripped.close()
 
+
 def _get_handler(byte):
     """
     Returns the appropriate header based on the second byte in the marker
@@ -62,16 +64,16 @@ def _app_handler(inp, out):
     """
     Handle APPn segments
     """
+
+    @restore_pos(0)
     def is_jfif(inp):
         "Check if we're at a jfif segment"
-        save_loc = inp.tell()
         inp.seek(-1, os.SEEK_CUR)
         if inp.read(1) != '\xe0':
             rval = False
         else:
             inp.read(2)
             rval = (inp.read(6) == 'JFIF\x00\x01')
-        inp.seek(save_loc, os.SEEK_SET)
         return rval
         
     if is_jfif(inp):
@@ -129,10 +131,10 @@ def _jfif_handler(inp, out):
     #Skip over any thumbnail data
     inp.seek(old_length - 14, os.SEEK_CUR)
 
+@restore_pos(0)
 def _get_length(inp):
     "Read the reported length of the segment"
     val = (ord(inp.read(1)) << 8) + ord(inp.read(1))
-    inp.seek(-2, os.SEEK_CUR)
     return val
 
 if __name__ == "__main__":
