@@ -16,6 +16,10 @@ def scrub(file_in, file_out):
     """
     otmp = cStringIO.StringIO()
     with open(file_in, 'rb') as input_:
+        header = input_.read(2)
+        if header != '\xff\xd8':
+            raise Exception("Not a JPEG!")
+        input_.seek(-2, os.SEEK_CUR)
         while True:
             byte = input_.read(1)
             if len(byte) == 0:
@@ -53,10 +57,9 @@ def _app_handler(inp, out):
     """
     Handle APPn segments
     """
-    if _is_jfif(inp):   #We want to keep non-thumbnail JFIF data.
+    if _is_jfif(inp):
         _jfif_handler(inp, out)
-    else:   #APPn segments seem to be  ordered 0xFFEn #### where #### is the
-            #number of bytes
+    else:
         length = _get_length(inp)
         inp.seek(length - 2, os.SEEK_CUR)
     
@@ -145,6 +148,12 @@ def _jfif_handler(inp, out):
     inp.seek(old_length - 14, os.SEEK_CUR)
 
 if __name__ == "__main__":
-    scrub(sys.argv[1], "%s-scr" % sys.argv[1])
+    if len(sys.argv) == 1:
+        sys.exit("Not enough parameters")
+    if len(sys.argv) == 2:
+        outfile = sys.argv[1].replace(".jpg", "-scr.jpg") 
+    else:
+        outfile = sys.argv[2]
+    scrub(sys.argv[1], "%s-scr" % sys.argv[2])
     
 __all__ = [scrub]
