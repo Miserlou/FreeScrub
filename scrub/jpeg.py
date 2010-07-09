@@ -16,10 +16,10 @@ def scrub(file_in, file_out):
     Scrubs the jpeg file_in, returns results to file_out
     """
     #Before we do anything, make sure that file_out is writeable
-    open(file_out, "w").close()
+    file(file_out, 'wb').close()
     stripped = cStringIO.StringIO()
     
-    with open(file_in, 'rb') as input_:
+    with file(file_in, 'rb') as input_:
         header = input_.read(2)
         if header != '\xff\xd8':
             raise Exception("Not a JPEG!")
@@ -33,7 +33,7 @@ def scrub(file_in, file_out):
             else:
                 next_byte = input_.read(1)
                 _get_handler(next_byte)(input_, stripped)
-    with open(file_out, 'wb') as output:
+    with file(file_out, 'wb') as output:
         output.write(stripped.getvalue())
     stripped.close()
 
