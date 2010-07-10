@@ -4,7 +4,7 @@
 #All code is released under the simplified (two-clause) BSD license
 """Functions for removing any metadata from a TIFF file"""
 
-from scrubdec import restore_pos
+from scommon import restore_pos, get_value
 import cStringIO
 import os
 
@@ -53,7 +53,7 @@ def _read_chunk(inp):
     header = inp.read(8)
     if len(header) < 8:
         return [None] * 4
-    c_length = _get_value(header[0:4])
+    c_length = get_value(header[0:4])
     c_type = header[5:]
     data = inp.read(c_length)
     crc = inp.read(4)
@@ -64,12 +64,6 @@ def _verify_png(inp):
     data = inp.read(8)
     if data != PNG_HEADER:
         raise Exception("Invalid PNG file")
-
-def _get_value(bytes_):
-    sum_ = 0
-    for byte in bytes_:
-        sum_ = (sum_ << 8) + ord(byte)
-    return sum_
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
