@@ -2,18 +2,18 @@
 # -*- coding: utf-8 -*-
 #Copyright (c) Michael McKinley, 2010
 #All code is released under the simplified (two-clause) BSD license
-"""Functions for removing any metadata from a TIFF file"""
+"""Functions for removing any metadata from a PNG file"""
 
-from scommon import restore_pos, get_value
+from scommon import get_value
 import cStringIO
-import os
 
-#Chunks we probably want to keep, but are safe to discard
+if __name__ == "__main__":
+    import sys
+
+#Ancilliary chunks that we may want to keep
 SAFA_CHUNKS = ["bKGD", "cHRM", "gAMA", "hIST", "iCCP", "pHYs", "sPLT", \
     "sRGB", "tRNS"]
 PNG_HEADER = '\x89PNG\x0d\x0a\x1a\x0a'
-if __name__ == "__main__":
-    import sys
 
 def scrub(file_in, file_out, paranoid = False):
     """
@@ -26,10 +26,10 @@ def scrub(file_in, file_out, paranoid = False):
         _verify_png(inp)
         scrubbed.write(PNG_HEADER)
         while True:
-            (c_type, header, data, crc) = _read_chunk(inp)
-            if c_type is None:
+            (header, data, crc) = _read_chunk(inp)
+            if header is None:
                 break
-            if _is_safe(c_type, paranoid):
+            if _is_safe(header[4:8], paranoid):
                 scrubbed.write(header)
                 scrubbed.write(data)
                 scrubbed.write(crc)
@@ -38,6 +38,11 @@ def scrub(file_in, file_out, paranoid = False):
     scrubbed.close()
 
 def _is_safe(chunk, paranoia):
+    """
+    Returns true if the chunk type contains "clean" data i.e., the chunk
+    type shouldn't contain any identifying data. If <paranoia> is enabled,
+    then only critical chunks are kept.
+    """
     #All critical chunks will be copied
     if chunk[0].isupper():
         return True
@@ -50,17 +55,28 @@ def _is_safe(chunk, paranoia):
     return chunk in SAFA_CHUNKS
 
 def _read_chunk(inp):
+    """
+    Read the next chunk in the file <inp>.
+
+    Returns a tuple containing (header, data, crc) where:
+     * header is the entire header of the chunk
+     * data contains the data itself
+     * crc the trailing crc data
+
+     If no data is read, returns [None,None,None]
+    """
     header = inp.read(8)
     if len(header) < 8:
-        return [None] * 4
-    c_length = get_value(header[0:4])
-    c_type = header[5:]
-    data = inp.read(c_length)
+        return [None] * 3
+    length = get_value(header[0:4])
+    data = inp.read(length)
     crc = inp.read(4)
-    return (c_type, header, data, crc)
-
+    return (header, data, crc)
 
 def _verify_png(inp):
+    """
+    Checks the header to ensure this is a PNG file
+    """
     data = inp.read(8)
     if data != PNG_HEADER:
         raise Exception("Invalid PNG file")
