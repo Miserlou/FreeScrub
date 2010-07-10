@@ -17,3 +17,15 @@ def restore_pos(file_index):
             return rval
         return wrapped_f
     return wrap
+
+def get_value(bytes_, little_endian = False):
+    """
+    Converts bytes_ to a number.
+    """
+    if little_endian:
+        bytes_ = reduce(lambda acc, new: "%s%s" % (new, acc), bytes_, "")
+
+    sum_ = 0
+    for byte in bytes_:
+        sum_ = (sum_ << 8) + ord(byte)
+    return sum_
