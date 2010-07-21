@@ -15,7 +15,7 @@ SAFA_CHUNKS = ["bKGD", "cHRM", "gAMA", "hIST", "iCCP", "pHYs", "sPLT", \
     "sRGB", "tRNS"]
 PNG_HEADER = '\x89PNG\x0d\x0a\x1a\x0a'
 
-def scrub(file_in, file_out, paranoid = False):
+def scrub_png(file_in, file_out, paranoid = False):
     """
     Scrub a PNG file. If paranoid is set, all ancillary chunks will be
     deleted.

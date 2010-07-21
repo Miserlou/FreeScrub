@@ -11,7 +11,6 @@ from scommon import restore_pos
 
 if __name__ == "__main__":
     import sys
-
 def scrub(file_in, file_out):
     """
     Scrubs the jpeg file_in, returns results to file_out
