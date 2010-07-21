@@ -10,7 +10,7 @@ import os
 if __name__ == "__main__":
     import sys
 
-def scrub(file_in, file_out):
+def scrub_tiff(file_in, file_out):
     pass
 
 
