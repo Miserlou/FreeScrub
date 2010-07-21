@@ -6,12 +6,12 @@
 
 import cStringIO
 import os
-from scrubdec import restore_pos
+from scommon import restore_pos
 
 
 if __name__ == "__main__":
     import sys
-    
+
 def scrub(file_in, file_out):
     """
     Scrubs the jpeg file_in, returns results to file_out
@@ -19,7 +19,7 @@ def scrub(file_in, file_out):
     #Before we do anything, make sure that file_out is writeable
     file(file_out, 'wb').close()
     stripped = cStringIO.StringIO()
-    
+
     with file(file_in, 'rb') as input_:
         header = input_.read(2)
         if header != '\xff\xd8':
@@ -57,8 +57,8 @@ def _get_handler(byte):
         return _app_handler
     if byte == '\x00' or byte == '\xff':
         return lambda ___, out: out.write('\xff%s' % byte)
-    
-    return lambda inp, out: _basic_handler(inp, out, False) 
+
+    return lambda inp, out: _basic_handler(inp, out, False)
 
 def _app_handler(inp, out):
     """
@@ -75,13 +75,13 @@ def _app_handler(inp, out):
             inp.read(2)
             rval = (inp.read(6) == 'JFIF\x00\x01')
         return rval
-        
+
     if is_jfif(inp):
         _jfif_handler(inp, out)
     else:
         length = _get_length(inp)
         inp.seek(length, os.SEEK_CUR) #
-    
+
 def _basic_handler(inp, out, copy_data):
     "Simple handler: scan the input until a new marker is reached"
     #Backtrack and write the marker
@@ -145,5 +145,5 @@ if __name__ == "__main__":
     else:
         outfile = sys.argv[2]
     scrub(sys.argv[1], outfile)
-    
+
 __all__ = [scrub]
