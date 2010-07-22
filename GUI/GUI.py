@@ -464,6 +464,19 @@ class OpenMultiFileSelection():
             self.got_multiple_location_func = got_multiple_location_func
 
             filter = gtk.FileFilter()
+            filter.set_name("Scrubbable files")
+            filter.add_mime_type("image/jpeg")
+            filter.add_pattern("*.jpeg")
+            filter.add_pattern("*.jpg")
+            filter.add_mime_type("image/png")
+            filter.add_pattern("*.png")
+            filter.add_mime_type("image/tiff")
+            filter.add_pattern("*.tiff")
+            filter.add_mime_type("application/pdf")
+            filter.add_pattern("*.pdf")
+            dialog.add_filter(filter)
+
+            filter = gtk.FileFilter()
             filter.set_name("All files")
             filter.add_pattern("*")
             dialog.add_filter(filter)
