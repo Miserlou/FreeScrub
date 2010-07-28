@@ -14,10 +14,9 @@ import gobject
 
 from GUI.GUI import *
 
-# XXX: This needs scrubedec! Where is scrubdec?!
-#from scrub.jpeg import scrub_jpeg
-from scrub.png import scrub_png
-from scrub.tiff import scrub_tiff
+from scrub import jpeg
+from scrub import png
+from scrub import tiff
 
 class MainWindow(Window):
 
@@ -232,14 +231,14 @@ class ProgressDialog(gtk.Dialog):
                 print "PDF needs to be OOified"
             elif type == ".jpg" or type == "jpeg" or type == ".JPG" or type == "JPEG":
                 #JPEG Scrubbing
-                #scrub_jpeg(file, file)
+                jpeg.scrub(file, file)
                 pass
             elif type == "tiff" or type == "TIFF":
                 #TIFF Scrubbing
-                scrub_tiff(file, file)
+                tiff.scrub(file, file)
             elif type == ".png" or type == ".PNG":
                 #PNG Scrub
-                scrub_png(file, file)
+                png.scrub(file, file)
             else:
                 print "Unsupported filetype"
 
