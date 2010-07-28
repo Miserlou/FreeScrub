@@ -15,7 +15,7 @@ SAFA_CHUNKS = ["bKGD", "cHRM", "gAMA", "hIST", "iCCP", "pHYs", "sPLT", \
     "sRGB", "tRNS"]
 PNG_HEADER = '\x89PNG\x0d\x0a\x1a\x0a'
 
-def scrub_png(file_in, file_out, paranoid = False):
+def scrub(file_in, file_out, paranoid = False):
     """
     Scrub a PNG file. If paranoid is set, all ancillary chunks will be
     deleted.
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         sys.exit("Not enough parameters")
     if len(sys.argv) == 2:
-        outfile = "%s-scr" % sys.argv[1] 
+        outfile = "%s-scr" % sys.argv[1]
     else:
         outfile = sys.argv[2]
     scrub(sys.argv[1], outfile, True)
