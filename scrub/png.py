@@ -20,7 +20,7 @@ def scrub(file_in, file_out, paranoid = False):
     Scrub a PNG file. If paranoid is set, all ancillary chunks will be
     deleted.
     """
-    file(file_out, 'wb').close()
+    file(file_out, 'rb+').close()
     scrubbed = cStringIO.StringIO()
     with file(file_in, 'rb') as inp:
         _verify_png(inp)

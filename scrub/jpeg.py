@@ -16,7 +16,7 @@ def scrub(file_in, file_out):
     Scrubs the jpeg file_in, returns results to file_out
     """
     #Before we do anything, make sure that file_out is writeable
-    file(file_out, 'wb').close()
+    file(file_out, 'rb+').close()
     stripped = cStringIO.StringIO()
 
     with file(file_in, 'rb') as input_:
