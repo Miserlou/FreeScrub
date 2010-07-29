@@ -109,6 +109,8 @@ class MainWindow(Window):
 
         self.add(self.box)
         self.show_all()
+            
+        self.set_icon_from_file("icon.png")
 
     def remove_selection(self,widget):
         sel = self.file_list.get_selection()

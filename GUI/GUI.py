@@ -133,8 +133,16 @@ class Window(gtk.Window):
         try:
             #TODO: Icon doesn't work on XP build, don't know why
             if (os.name != 'nt'):
-                return
-                #self.set_icon_from_file(os.path.join(image_root,'anomos.ico'))
+                app_root = unicode(os.path.split(__path__[0])[0])
+                image_root = os.path.join(app_root, 'images')
+
+            if app_root.startswith(os.path.join(sys.prefix,'bin')):
+                # I'm installed on *nix
+                image_root, doc_root = map( lambda p: os.path.join(sys.prefix, p), calc_unix_dirs() )
+
+            loc = os.path.join(image_root, 'icon.png')
+            print loc
+            self.set_icon_from_file(loc)
         except Exception, e:
             return 
             #log.warning(e)
