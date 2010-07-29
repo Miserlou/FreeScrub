@@ -29,7 +29,7 @@ class MainWindow(Window):
         self.connect('destroy', self.quit)
         self.set_title('FreeScrub')
         self.set_border_width(SPACING)
-        self.resize(400,600)
+        self.resize(491,303)
 
         self.set_position(gtk.WIN_POS_CENTER)
 
