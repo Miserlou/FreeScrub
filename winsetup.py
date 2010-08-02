@@ -14,4 +14,4 @@ opts = {
 setup(windows=[{'script': 'scrubber.py',
                 "icon_resources": [(1, "icon.png")]}],
       options=opts,
-      data_files=[(glob.glob("icon.png")) ],)
+      data_files=["icon.png"])
