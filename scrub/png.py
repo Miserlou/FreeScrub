@@ -3,7 +3,7 @@
 #Copyright (c) Michael McKinley, 2010
 #All code is released under the simplified (two-clause) BSD license
 """Functions for removing any metadata from a PNG file"""
-
+from __future__ import with_statement
 from scommon import get_value
 import cStringIO
 

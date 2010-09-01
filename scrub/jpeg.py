@@ -3,11 +3,10 @@
 #Copyright (c) Michael McKinley, 2010
 #All code is released under the simplified (two-clause) BSD license
 """Functions for removing any metadata from a JPEG file"""
-
+from __future__ import with_statement
 import cStringIO
 import os
 from scommon import restore_pos
-
 
 if __name__ == "__main__":
     import sys
