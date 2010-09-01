@@ -12,7 +12,7 @@ from threading import Thread
 
 import gtk
 import gobject
-gtk.gdk.threads_init()
+gobject.threads_init()
 
 from GUI.GUI import *
 
@@ -221,7 +221,16 @@ class ProgressDialog(gtk.Dialog):
         self.done_button = gtk.Button(stock=gtk.STOCK_OK)
         self.done_button.connect('clicked', self.cancel)
 
-        self.thread = Thread(target=self.complete)
+        class ScrubThread(threading.Thread):
+            def __init__(self, parent):
+                super(ScrubThread, self).__init__()
+                self.parent = parent
+                self.quit = False
+
+            def run(self):
+                self.parent.complete()
+
+        self.thread = ScrubThread(self)
         self.thread.start()
 
 
@@ -267,19 +276,15 @@ class ProgressDialog(gtk.Dialog):
         try:
             self.scrub()
             if not self.flag.isSet():
-                gtk.gdk.threads_enter()
                 self.set_title('Done.')
                 self.label.set_text('Done scrubbing!')
                 self.set_progress_value(1)
                 self.action_area.remove(self.cancelbutton)
                 self.action_area.pack_start(self.done_button)
                 self.done_button.show()
-                gtk.gdk.threads_leave()
         except (OSError, IOError), e:
-            gtk.gdk.threads_enter()
             self.set_title('Error!')
             self.label.set_text('Error scrubbing documents: ' + str(e))
-            gtk.gdk.threads_leave()
 
 def main(parent=None):
     w = MainWindow(parent)
