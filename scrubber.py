@@ -17,6 +17,7 @@ from GUI.GUI import *
 from scrub import jpeg
 from scrub import png
 from scrub import tiff
+from scrub import pdf
 
 class MainWindow(Window):
 
@@ -109,7 +110,7 @@ class MainWindow(Window):
 
         self.add(self.box)
         self.show_all()
-            
+
         self.set_icon_from_file("icon.png")
 
     def remove_selection(self,widget):
@@ -230,7 +231,7 @@ class ProgressDialog(gtk.Dialog):
             type = file[-4::]
             if type == ".pdf" or type == ".PDF":
                 #PDF Scrubbing
-                print "PDF needs to be OOified"
+                pdf.scrub(file, file)
             elif type == ".jpg" or type == "jpeg" or type == ".JPG" or type == "JPEG":
                 #JPEG Scrubbing
                 jpeg.scrub(file, file)
@@ -242,7 +243,8 @@ class ProgressDialog(gtk.Dialog):
                 #PNG Scrub
                 png.scrub(file, file)
             else:
-                print "Unsupported filetype"
+                pass
+                #print "Unsupported filetype"
 
     def complete(self):
         try:
