@@ -8,9 +8,11 @@ import sys
 assert sys.version_info >= (2, 3), "Install Python 2.3 or greater"
 
 from threading import Event
+from threading import Thread
 
 import gtk
 import gobject
+gtk.gdk.threads_init()
 
 from GUI.GUI import *
 
@@ -148,11 +150,22 @@ class MainWindow(Window):
         return files
 
     def make(self, widget):
-        file_list = self.get_file_list()
-        errored = False
-        if not errored:
-            d = ProgressDialog(self, file_list)
-            d.main()
+
+        msg = 'Are you certain you want to scrub these files? All metadata will be permanently lost.'
+        md= gtk.MessageDialog(self.mainwindow,
+                buttons=gtk.BUTTONS_OK_CANCEL,
+                type=gtk.MESSAGE_QUESTION,
+                message_format = msg
+                )
+        md.set_title("Really scrub?")
+        result = md.run()
+        md.destroy()
+        if result == gtk.RESPONSE_OK:
+            file_list = self.get_file_list()
+            errored = False
+            if not errored:
+                d = ProgressDialog(self, file_list)
+                d.run()
 
     def check_buttons(self, *widgets):
         file_list = self.get_file_list()
@@ -193,7 +206,7 @@ class ProgressDialog(gtk.Dialog):
         self.file_list = file_list
         self.flag = Event() # ???
 
-        self.label = gtk.Label('Scrubbing Documents..')
+        self.label = gtk.Label('Scrubbing documents, please wait..')
         self.label.set_line_wrap(True)
 
         self.vbox.set_spacing(SPACING)
@@ -207,6 +220,10 @@ class ProgressDialog(gtk.Dialog):
 
         self.done_button = gtk.Button(stock=gtk.STOCK_OK)
         self.done_button.connect('clicked', self.cancel)
+
+        self.thread = Thread(target=self.complete)
+        self.thread.start()
+
 
     def main(self):
         self.complete()
@@ -227,6 +244,7 @@ class ProgressDialog(gtk.Dialog):
         gtk.main_iteration(block=False)
 
     def scrub(self):
+
         for file in self.file_list:
             type = file[-4::]
             if type == ".pdf" or type == ".PDF":
@@ -244,21 +262,24 @@ class ProgressDialog(gtk.Dialog):
                 png.scrub(file, file)
             else:
                 pass
-                #print "Unsupported filetype"
 
     def complete(self):
         try:
             self.scrub()
             if not self.flag.isSet():
+                gtk.gdk.threads_enter()
                 self.set_title('Done.')
                 self.label.set_text('Done scrubbing!')
                 self.set_progress_value(1)
                 self.action_area.remove(self.cancelbutton)
                 self.action_area.pack_start(self.done_button)
                 self.done_button.show()
+                gtk.gdk.threads_leave()
         except (OSError, IOError), e:
+            gtk.gdk.threads_enter()
             self.set_title('Error!')
             self.label.set_text('Error scrubbing documents: ' + str(e))
+            gtk.gdk.threads_leave()
 
 def main(parent=None):
     w = MainWindow(parent)

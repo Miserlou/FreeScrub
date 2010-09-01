@@ -252,46 +252,6 @@ class AutoScrollingWindow(ScrolledWindow):
             gobject.source_remove(self.vscrolltimeout)
             self.vscrolltimeout = None
 
-class MessageDialog(gtk.MessageDialog):
-    flags = gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT
-
-    def __init__(self, parent, title, message,
-                 type=gtk.MESSAGE_ERROR,
-                 buttons=gtk.BUTTONS_OK,
-                 yesfunc=None, nofunc=None,
-                 default=None
-                 ):
-        gtk.MessageDialog.__init__(self, parent,
-                                   self.flags,
-                                   type=gtk.MESSAGE_ERROR, buttons=buttons,
-                                   message_format=message)
-
-        self.set_size_request(-1, -1)
-        self.set_resizable(False)
-        self.set_title(title)
-        if default is not None:
-            self.set_default_response(default)
-
-        self.connect('response', self.callback)
-
-        self.yesfunc = yesfunc
-        self.nofunc = nofunc
-        self.show_all()
-
-    def callback(self, widget, response_id, *args):
-        if ((response_id == gtk.RESPONSE_OK or
-             response_id == gtk.RESPONSE_YES) and
-            self.yesfunc is not None):
-            self.yesfunc()
-        if ((response_id == gtk.RESPONSE_CANCEL or
-             response_id == gtk.RESPONSE_NO )
-            and self.nofunc is not None):
-            self.nofunc()
-        self.destroy()
-
-class ErrorMessageDialog(MessageDialog):
-    flags = gtk.DIALOG_DESTROY_WITH_PARENT
-
 class FileSelection():
 
     def __init__(self, main, title='', fullname='', got_location_func=None, no_location_func=None, got_multiple_location_func=None, show=True):
