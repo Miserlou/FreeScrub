@@ -1,6 +1,30 @@
+FreeScrub 0.1
 A FOSS metadata scrubber supporting PNG, PDF, TIFF, and JPEG files (with more to come).
+By Michael McKinley (mikm), Chris Tandiono (christandiono) and Rich Jones (Miserlou)
 
-By Michael McKinley (mikm), christandiono and Rich Jones (Miserlou)
+FreeScrub is a PyGTK based applicatino which will scrub EXIF and other metadata out of images
+and documents. This is useful for people who want to publish images and documents without
+revealing any information about their location, their camera or their computer hardware. It's also
+quite useful for web developers as it reduces the size of the file by removing unneccesary text
+strings embedded inside files.
 
-Based on:
-http://pybrary.net/pyPdf/
+FreeScrub was conceived as an idea in a reddit thread [1] and born on GitHub [2].
+
+Currently, it works very well for JPEG, TIFF and PNG images. It will also remove the simplest metadata
+from PDF documents, however it won't yet scrub the metadata from the images inside the PDF.
+
+TODO:
+    Improve PDF scrubbing
+    Linux/OSX/Windows packaging work
+    Translations!
+
+Dependancies:
+    Python (Confirmed working on 2.5 and higher)
+    GTK/pyGtk
+    python-pypdf [3]
+    For Windows build:
+        py2exe
+
+* [1] http://www.reddit.com/r/linux/comments/cmmkz/can_anybody_recommend_a_foss_exif_or_pdf_metadata/
+* [2] http://github.com/Miserlou/FreeScrub/network/members
+* [3] http://pybrary.net/pyPdf/
