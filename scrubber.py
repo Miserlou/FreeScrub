@@ -22,7 +22,6 @@ from scrub import tiff
 from scrub import pdf
 
 if os.name != 'nt':
-    print "Balls"
     gobject.threads_init()
 
 class MainWindow(Window):
