@@ -4,6 +4,7 @@ from __future__ import division
 
 import os
 import sys
+import time
 
 assert sys.version_info >= (2, 3), "Install Python 2.3 or greater"
 
@@ -12,7 +13,6 @@ from threading import Thread
 
 import gtk
 import gobject
-gobject.threads_init()
 
 from GUI.GUI import *
 
@@ -20,6 +20,10 @@ from scrub import jpeg
 from scrub import png
 from scrub import tiff
 from scrub import pdf
+
+if os.name != 'nt':
+    print "Balls"
+    gobject.threads_init()
 
 class MainWindow(Window):
 
@@ -29,6 +33,8 @@ class MainWindow(Window):
             self.mainwindow = self # temp hack to make modal win32 file choosers work
         else:
             self.mainwindow = parent # temp hack to make modal win32 file choosers work
+
+	gtk.gdk.threads_enter()
         self.connect('destroy', self.quit)
         self.set_title('FreeScrub')
         self.set_border_width(SPACING)
@@ -114,6 +120,8 @@ class MainWindow(Window):
         self.show_all()
 
         self.set_icon_from_file("icon.png")
+
+	gtk.gdk.threads_leave()
 
     def remove_selection(self,widget):
         sel = self.file_list.get_selection()
@@ -220,18 +228,22 @@ class ProgressDialog(gtk.Dialog):
 
         self.done_button = gtk.Button(stock=gtk.STOCK_OK)
         self.done_button.connect('clicked', self.cancel)
+	self.stopthread = threading.Event()
 
-        class ScrubThread(threading.Thread):
-            def __init__(self, parent):
-                super(ScrubThread, self).__init__()
-                self.parent = parent
-                self.quit = False
+        if os.name != 'nt':
+            class ScrubThread(threading.Thread):
+                def __init__(self, parent):
+                    super(ScrubThread, self).__init__()
+                    self.parent = parent
+                    self.quit = False
 
-            def run(self):
-                self.parent.complete()
+                def run(self):
+                    self.parent.complete()
 
-        self.thread = ScrubThread(self)
-        self.thread.start()
+            self.thread = ScrubThread(self)
+            self.thread.start()
+        else:
+            self.complete()
 
 
     def main(self):
@@ -239,6 +251,7 @@ class ProgressDialog(gtk.Dialog):
 
     def cancel(self, widget=None):
         self.flag.set()
+	self.stopthread.set()
         self.destroy()
 
     def set_progress_value(self, value):
@@ -253,7 +266,6 @@ class ProgressDialog(gtk.Dialog):
         gtk.main_iteration(block=False)
 
     def scrub(self):
-
         for file in self.file_list:
             type = file[-4::]
             if type == ".pdf" or type == ".PDF":
@@ -271,18 +283,24 @@ class ProgressDialog(gtk.Dialog):
                 png.scrub(file, file)
             else:
                 pass
+	self.stopthread.set()
 
     def complete(self):
         try:
-            self.scrub()
-            if not self.flag.isSet():
-                self.set_title('Done.')
-                self.label.set_text('Done scrubbing!')
-                self.set_progress_value(1)
-                self.action_area.remove(self.cancelbutton)
-                self.action_area.pack_start(self.done_button)
-                self.done_button.show()
+	    gtk.gdk.threads_enter()
+	    self.scrub()
+            while not self.stopthread.isSet():
+		time.sleep(0.5)
+            self.set_title('Done.')
+            self.label.set_text('Done scrubbing!')
+            self.set_progress_value(1)
+            self.action_area.remove(self.cancelbutton)
+            self.action_area.pack_start(self.done_button)
+            self.done_button.show()
+            gtk.gdk.threads_leave()
+	    return
         except (OSError, IOError), e:
+	    print e
             self.set_title('Error!')
             self.label.set_text('Error scrubbing documents: ' + str(e))
 
@@ -292,9 +310,10 @@ def main(parent=None):
 if __name__ == '__main__':
     main()
     try:
+        gtk.gdk.threads_enter()
         gtk.main()
+        gtk.gdk.threads_leave()
     except KeyboardInterrupt:
         # gtk.mainloop not running
         # exit and don't save config options
         sys.exit(1)
-
