@@ -276,12 +276,14 @@ class ProgressDialog(gtk.Dialog):
         try:
             self.scrub()
             if not self.flag.isSet():
+                gtk.gdk.threads_enter()
                 self.set_title('Done.')
                 self.label.set_text('Done scrubbing!')
                 self.set_progress_value(1)
                 self.action_area.remove(self.cancelbutton)
                 self.action_area.pack_start(self.done_button)
                 self.done_button.show()
+                gtk.gdk.threads_leave()
         except (OSError, IOError), e:
             self.set_title('Error!')
             self.label.set_text('Error scrubbing documents: ' + str(e))
@@ -292,7 +294,9 @@ def main(parent=None):
 if __name__ == '__main__':
     main()
     try:
+        gtk.gdk.threads_enter()
         gtk.main()
+        gtk.gdk.threads_leave()
     except KeyboardInterrupt:
         # gtk.mainloop not running
         # exit and don't save config options
