@@ -25,7 +25,9 @@ if os.name != 'nt':
     gobject.threads_init()
 
 import warnings
-warnings.filterwarnings("ignore",category=DeprecationWarning)
+def customwarn(message, category, filename, lineno, file=None, line=None):
+    pass
+warnings.showwarning = customwarn
 
 class MainWindow(Window):
 
@@ -289,10 +291,10 @@ class ProgressDialog(gtk.Dialog):
 
     def complete(self):
         try:
-	    gtk.gdk.threads_enter()
 	    self.scrub()
             while not self.stopthread.isSet():
 		time.sleep(0.5)
+	    gtk.gdk.threads_enter()
             self.set_title('Done.')
             self.label.set_text('Done scrubbing!')
             self.set_progress_value(1)
