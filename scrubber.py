@@ -91,7 +91,7 @@ class MainWindow(Window):
         self.remove_button.connect('clicked', self.remove_selection)
         self.remove_button.set_sensitive(False)
         self.file_list_button_box.pack_start(self.remove_button)
-        self.clear_button = gtk.Button(stock=gtk.STOCK_CLEAR)
+        self.clear_button = IconButton('Clear', stock=gtk.STOCK_REMOVE)
         self.clear_button.connect('clicked', self.clear_file_list)
         self.clear_button.set_sensitive(False)
         self.file_list_button_box.pack_start(self.clear_button)
@@ -109,7 +109,7 @@ class MainWindow(Window):
 
         self.buttonbox.pack_start(gtk.Label(''), expand=True, fill=True)
 
-        self.makebutton = IconButton('Scrub', stock=gtk.STOCK_EXECUTE)
+        self.makebutton = IconButton('Scrub', stock=gtk.STOCK_CLEAR)
         self.makebutton.connect('clicked', self.make)
         self.makebutton.set_sensitive(False)
         self.buttonbox.pack_end(self.makebutton, expand=True, fill=True)
