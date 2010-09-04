@@ -177,7 +177,8 @@ class MainWindow(Window):
             errored = False
             if not errored:
                 d = ProgressDialog(self, file_list)
-                d.run()
+                if os.name != 'nt':
+                    d.run()
 
     def check_buttons(self, *widgets):
         file_list = self.get_file_list()
@@ -290,14 +291,11 @@ class ProgressDialog(gtk.Dialog):
 	    self.scrub()
             while not self.stopthread.isSet():
 		time.sleep(0.5)
-	    #gtk.gdk.threads_enter()
-            gobject.idle_add(self.set_title,'Done.')
-            gobject.idle_add(self.label.set_text,'Done scrubbing!')
-            gobject.idle_add(self.set_progress_value,1)
-            gobject.idle_add(self.action_area.remove,self.cancelbutton)
-            gobject.idle_add(self.action_area.pack_start,self.done_button)
+            gobject.idle_add(self.set_title, 'Done.')
+            gobject.idle_add(self.label.set_text, 'Done scrubbing!')
+            gobject.idle_add(self.action_area.remove, self.cancelbutton)
+            gobject.idle_add(self.action_area.pack_start, self.done_button)
             gobject.idle_add(self.done_button.show)
-            #gtk.gdk.threads_leave()
 	    return
         except (OSError, IOError), e:
 	    print e
