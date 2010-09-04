@@ -118,7 +118,7 @@ class MainWindow(Window):
         self.add(self.box)
         self.show_all()
 
-        self.set_icon_from_file("icon.png")
+        self.set_icon_from_file("icon.ico")
 
 	gtk.gdk.threads_leave()
 
