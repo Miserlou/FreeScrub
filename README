@@ -17,6 +17,10 @@ TODO:
     Improve PDF scrubbing
     Linux/OSX/Windows packaging work
     Translations!
+    DOC/DOCX support
+    Audio file support
+    Command line version
+    Web version
 
 Dependencies:
     Python (Confirmed working on 2.5 and higher)
