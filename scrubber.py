@@ -234,21 +234,17 @@ class ProgressDialog(gtk.Dialog):
         self.done_button.connect('clicked', self.cancel)
 	self.stopthread = threading.Event()
 
-        if os.name != 'nt':
-            class ScrubThread(threading.Thread):
-                def __init__(self, parent):
-                    super(ScrubThread, self).__init__()
-                    self.parent = parent
-                    self.quit = False
+        class ScrubThread(threading.Thread):
+            def __init__(self, parent):
+                super(ScrubThread, self).__init__()
+                self.parent = parent
+                self.quit = False
 
-                def run(self):
-                    self.parent.complete()
+            def run(self):
+                self.parent.complete()
 
-            self.thread = ScrubThread(self)
-            self.thread.start()
-        else:
-            self.complete()
-
+        self.thread = ScrubThread(self)
+        self.thread.start()
 
     def main(self):
         self.complete()
@@ -294,14 +290,14 @@ class ProgressDialog(gtk.Dialog):
 	    self.scrub()
             while not self.stopthread.isSet():
 		time.sleep(0.5)
-	    gtk.gdk.threads_enter()
-            self.set_title('Done.')
-            self.label.set_text('Done scrubbing!')
-            self.set_progress_value(1)
-            self.action_area.remove(self.cancelbutton)
-            self.action_area.pack_start(self.done_button)
-            self.done_button.show()
-            gtk.gdk.threads_leave()
+	    #gtk.gdk.threads_enter()
+            gobject.idle_add(self.set_title,'Done.')
+            gobject.idle_add(self.label.set_text,'Done scrubbing!')
+            gobject.idle_add(self.set_progress_value,1)
+            gobject.idle_add(self.action_area.remove,self.cancelbutton)
+            gobject.idle_add(self.action_area.pack_start,self.done_button)
+            gobject.idle_add(self.done_button.show)
+            #gtk.gdk.threads_leave()
 	    return
         except (OSError, IOError), e:
 	    print e
@@ -312,6 +308,8 @@ def main(parent=None):
     w = MainWindow(parent)
 
 if __name__ == '__main__':
+    if os.name == 'nt':
+        gtk.gdk.threads_init()
     main()
     try:
         gtk.gdk.threads_enter()
