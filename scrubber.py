@@ -24,6 +24,9 @@ from scrub import pdf
 if os.name != 'nt':
     gobject.threads_init()
 
+import warnings
+warnings.filterwarnings("ignore",category=DeprecationWarning)
+
 class MainWindow(Window):
 
     def __init__(self, parent=None):
